@@ -1,6 +1,5 @@
-import type { QywxBotFetch } from '../src/index'
 import { Buffer } from 'node:buffer'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   createUploadWebhook,
   extractWebhookKey,
@@ -14,6 +13,10 @@ import {
   textMessage,
   voiceMessage,
 } from '../src/index'
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('message builders', () => {
   it('creates text payload with mentioned lists', () => {
@@ -132,17 +135,15 @@ describe('webhook helpers', () => {
 })
 
 describe('qywx bot', () => {
-  it('sends json payload with injected fetch', async () => {
+  it('sends json payload with global fetch', async () => {
     const calls: Array<{ input: string, init?: RequestInit }> = []
-    const fetchMock: QywxBotFetch = async (input, init) => {
+    const fetchMock: typeof fetch = async (input, init) => {
       calls.push({ input: String(input), init })
       return new Response(JSON.stringify({ errcode: 0, errmsg: 'ok' }))
     }
+    vi.stubGlobal('fetch', fetchMock)
 
-    const bot = new QywxBot({
-      webhook: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=robot-key',
-      fetch: fetchMock,
-    })
+    const bot = new QywxBot('https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=robot-key')
 
     await expect(bot.sendText('hello', {
       mentionedMobileList: ['13800001111'],
@@ -163,7 +164,7 @@ describe('qywx bot', () => {
 
   it('uploads media with key extracted from webhook', async () => {
     const calls: Array<{ input: string, init?: RequestInit }> = []
-    const fetchMock: QywxBotFetch = async (input, init) => {
+    const fetchMock: typeof fetch = async (input, init) => {
       calls.push({ input: String(input), init })
       return new Response(JSON.stringify({
         errcode: 0,
@@ -173,11 +174,9 @@ describe('qywx bot', () => {
         created_at: '1380000000',
       }))
     }
+    vi.stubGlobal('fetch', fetchMock)
 
-    const bot = new QywxBot({
-      webhook: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=robot-key',
-      fetch: fetchMock,
-    })
+    const bot = new QywxBot('https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=robot-key')
 
     await expect(bot.uploadMedia(new Blob(['hello world']), {
       filename: 'hello.txt',
@@ -197,16 +196,15 @@ describe('qywx bot', () => {
   })
 
   it('throws api error when qywx response is not ok', async () => {
-    const fetchMock: QywxBotFetch = async () => {
+    const fetchMock: typeof fetch = async () => {
       return new Response(JSON.stringify({
         errcode: 93000,
         errmsg: 'invalid webhook',
       }))
     }
-    const bot = new QywxBot({
-      webhook: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=robot-key',
-      fetch: fetchMock,
-    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const bot = new QywxBot('https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=robot-key')
 
     await expect(bot.sendMarkdown('告警')).rejects.toMatchObject({
       name: 'QywxBotApiError',

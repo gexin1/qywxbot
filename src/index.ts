@@ -134,15 +134,10 @@ export type QywxBotMessage
     | VoiceMessage
     | TemplateCardMessage
 
-/** 可注入的 fetch 类型，用于单元测试或自定义运行环境。 */
-export type QywxBotFetch = typeof fetch
-
 /** 创建企业微信机器人客户端的配置。 */
 export interface QywxBotOptions {
   /** 机器人 webhook 完整地址，例如 https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx。 */
   webhook: string | URL
-  /** 自定义 fetch 实现。 */
-  fetch?: QywxBotFetch
 }
 
 /** 上传文件或语音素材的配置。 */
@@ -346,18 +341,16 @@ export function createUploadWebhook(webhook: string | URL, type: 'file' | 'voice
 /** 企业微信机器人 webhook 客户端。 */
 export class QywxBot {
   private readonly sendWebhook: string
-  private readonly fetchImpl?: QywxBotFetch
 
   /**
    * 创建机器人客户端。
    *
-   * @param options 企业微信机器人完整 webhook，或包含 webhook 和 fetch 的配置对象。
+   * @param options 企业微信机器人完整 webhook，或包含 webhook 的配置对象。
    */
   constructor(options: string | URL | QywxBotOptions) {
     const normalized = normalizeOptions(options)
     extractWebhookKey(normalized.webhook)
     this.sendWebhook = String(normalized.webhook)
-    this.fetchImpl = normalized.fetch ?? globalThis.fetch
   }
 
   /**
@@ -366,7 +359,7 @@ export class QywxBot {
    * @param message 企业微信机器人消息体。
    */
   async send(message: QywxBotMessage): Promise<QywxBotResponse> {
-    const response = await this.getFetch()(this.sendWebhook, {
+    const response = await fetch(this.sendWebhook, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -452,7 +445,7 @@ export class QywxBot {
     const type = options.type ?? 'file'
     const multipart = await createMultipartBody(media, options.filename ?? 'media')
 
-    const response = await this.getFetch()(createUploadWebhook(this.sendWebhook, type), {
+    const response = await fetch(createUploadWebhook(this.sendWebhook, type), {
       method: 'POST',
       headers: {
         'content-length': String(multipart.body.byteLength),
@@ -463,18 +456,12 @@ export class QywxBot {
 
     return readQywxResponse<QywxBotUploadResponse>(response)
   }
-
-  private getFetch(): QywxBotFetch {
-    if (!this.fetchImpl)
-      throw new TypeError('当前运行环境没有 fetch，请传入 options.fetch')
-    return this.fetchImpl
-  }
 }
 
 /**
  * 创建企业微信机器人客户端。
  *
- * @param options 企业微信机器人完整 webhook，或包含 webhook 和 fetch 的配置对象。
+ * @param options 企业微信机器人完整 webhook，或包含 webhook 的配置对象。
  */
 export function createQywxBot(options: string | URL | QywxBotOptions): QywxBot {
   return new QywxBot(options)
