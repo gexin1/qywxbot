@@ -37,6 +37,7 @@
     "release": "bumpp",
     "start": "tsx src/index.ts",
     "test": "pnpm run build && vitest",
+    "test:real": "tsx scripts/real-webhook.ts",
     "typecheck": "tsc",
     "prepare": "git config core.hooksPath .githooks && simple-git-hooks && skills-npm"
   },

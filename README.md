@@ -42,6 +42,29 @@ const uploaded = await bot.uploadMedia(new Blob(['hello world']), {
 await bot.sendFile(uploaded.media_id)
 ```
 
+## 真实测试
+
+项目提供了手动集成测试脚本，会依次发送文本、Markdown、图片、图文、文件和模板卡片消息。
+
+```powershell
+$env:QYWX_BOT_WEBHOOK="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+pnpm run test:real
+```
+
+如果要测试文本消息 @ 手机号：
+
+```powershell
+$env:QYWX_BOT_MENTIONED_MOBILES="13800001111,13900002222"
+pnpm run test:real
+```
+
+语音消息需要准备真实 AMR 文件：
+
+```powershell
+$env:QYWX_BOT_VOICE_FILE="D:\tmp\test.amr"
+pnpm run test:real
+```
+
 ## 注意事项
 
 - 请保护好机器人 webhook，不要提交到 GitHub 或公开日志。
