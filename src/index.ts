@@ -450,12 +450,15 @@ export class QywxBot {
    */
   async uploadMedia(media: Blob, options: UploadMediaOptions = {}): Promise<QywxBotUploadResponse> {
     const type = options.type ?? 'file'
-    const form = new FormData()
-    form.append('media', media, options.filename)
+    const multipart = await createMultipartBody(media, options.filename ?? 'media')
 
     const response = await this.getFetch()(createUploadWebhook(this.sendWebhook, type), {
       method: 'POST',
-      body: form,
+      headers: {
+        'content-length': String(multipart.body.byteLength),
+        'content-type': `multipart/form-data; boundary=${multipart.boundary}`,
+      },
+      body: multipart.body,
     })
 
     return readQywxResponse<QywxBotUploadResponse>(response)
@@ -493,6 +496,27 @@ function normalizeOptions(options: string | URL | QywxBotOptions): QywxBotOption
 function assertNonEmptyString(value: unknown, name: string): asserts value is string {
   if (typeof value !== 'string' || value.length === 0)
     throw new TypeError(`${name} 必须是非空字符串`)
+}
+
+async function createMultipartBody(media: Blob, filename: string): Promise<{ boundary: string, body: Uint8Array<ArrayBuffer> }> {
+  const boundary = `----qywxbot-${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`
+  const contentType = media.type || 'application/octet-stream'
+  const escapedFilename = filename.replaceAll('"', '%22').replaceAll('\r', '').replaceAll('\n', '')
+  const head = Buffer.from([
+    `--${boundary}`,
+    `Content-Disposition: form-data; name="media"; filename="${escapedFilename}"`,
+    `Content-Type: ${contentType}`,
+    '',
+    '',
+  ].join('\r\n'))
+  const file = Buffer.from(await media.arrayBuffer())
+  const tail = Buffer.from(`\r\n--${boundary}--\r\n`)
+  const body = Buffer.concat([head, file, tail])
+
+  return {
+    boundary,
+    body: new Uint8Array(body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength)),
+  }
 }
 
 async function readQywxResponse<T extends QywxBotResponse>(response: Response): Promise<T> {

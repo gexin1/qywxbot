@@ -188,7 +188,12 @@ describe('qywx bot', () => {
 
     expect(calls[0]?.input).toBe('https://qyapi.weixin.qq.com/cgi-bin/webhook/upload_media?key=robot-key&type=file')
     expect(calls[0]?.init?.method).toBe('POST')
-    expect(calls[0]?.init?.body).toBeInstanceOf(FormData)
+    expect(calls[0]?.init?.headers).toMatchObject({
+      'content-length': expect.any(String),
+      'content-type': expect.stringMatching(/^multipart\/form-data; boundary=----qywxbot-/),
+    })
+    expect(calls[0]?.init?.body).toBeInstanceOf(Uint8Array)
+    expect(Buffer.from(calls[0]?.init?.body as Uint8Array).toString()).toContain('name="media"; filename="hello.txt"')
   })
 
   it('throws api error when qywx response is not ok', async () => {
