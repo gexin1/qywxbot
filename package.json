@@ -7,12 +7,12 @@
   "author": "Anthony Fu <anthonyfu117@hotmail.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/antfu",
-  "homepage": "https://github.com/antfu/qywxbot#readme",
+  "homepage": "https://github.com/gexin1/qywxbot#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/antfu/qywxbot.git"
+    "url": "git+https://github.com/gexin1/qywxbot.git"
   },
-  "bugs": "https://github.com/antfu/qywxbot/issues",
+  "bugs": "https://github.com/gexin1/qywxbot/issues",
   "keywords": [
     "qywx",
     "wecom",
