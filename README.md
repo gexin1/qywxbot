@@ -1,42 +1,54 @@
-# pkg-placeholder
+# qywxbot
 
-[![npm version][npm-version-src]][npm-version-href]
-[![npm downloads][npm-downloads-src]][npm-downloads-href]
-[![bundle][bundle-src]][bundle-href]
-[![JSDocs][jsdocs-src]][jsdocs-href]
-[![License][license-src]][license-href]
+企业微信群机器人 Webhook 客户端，支持文本、Markdown、图片、图文、文件、语音和模板卡片消息。
 
-_description_
+## 安装
 
-## Note for Developers
+```bash
+pnpm add qywxbot
+```
 
-This starter recommands using [npm Trusted Publisher](https://github.com/e18e/ecosystem-issues/issues/201), where the release is done on CI to ensure the security of the packages.
+## 使用
 
-To do so, you need to run `pnpm publish` manually for the very first time to create the package on npm, and then go to `https://www.npmjs.com/package/<your-package-name>/access` to set the connection to your GitHub repo.
+```ts
+import { QywxBot } from 'qywxbot'
 
-Then for the future releases, you can run `pnpm run release` to do the release and the GitHub Actions will take care of the release process.
+const bot = new QywxBot(process.env.QYWX_BOT_WEBHOOK!)
 
-## Sponsors
+await bot.sendText('广州今日天气：29度', {
+  mentionedList: ['wangqing'],
+  mentionedMobileList: ['13800001111'],
+})
 
-<p align="center">
-  <a href="https://cdn.jsdelivr.net/gh/antfu/static/sponsors.svg">
-    <img src="https://cdn.jsdelivr.net/gh/antfu/static/sponsors.svg" alt="Sponsors"/>
-  </a>
-</p>
+await bot.sendMarkdown('实时新增用户反馈<font color="warning">132例</font>')
+```
+
+完整 webhook 通常形如：
+
+```txt
+https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
+
+## 文件和语音
+
+文件、语音需要先上传素材获得 `media_id`，再发送对应消息。
+
+```ts
+const uploaded = await bot.uploadMedia(new Blob(['hello world']), {
+  type: 'file',
+  filename: 'hello.txt',
+})
+
+await bot.sendFile(uploaded.media_id)
+```
+
+## 注意事项
+
+- 请保护好机器人 webhook，不要提交到 GitHub 或公开日志。
+- 企业微信限制每个机器人每分钟最多发送 20 条消息。
+- 图片消息需要提供原始二进制的 base64 和 md5，本包提供 `imageMessageFromBuffer` 方便生成。
+- Markdown 消息如需 @ 成员，请在内容里使用企业微信支持的 `<@userid>` 语法。
 
 ## License
 
-[MIT](./LICENSE) License © [Anthony Fu](https://github.com/antfu)
-
-<!-- Badges -->
-
-[npm-version-src]: https://img.shields.io/npm/v/pkg-placeholder?style=flat&colorA=080f12&colorB=1fa669
-[npm-version-href]: https://npmx.dev/package/pkg-placeholder
-[npm-downloads-src]: https://img.shields.io/npm/dm/pkg-placeholder?style=flat&colorA=080f12&colorB=1fa669
-[npm-downloads-href]: https://npmx.dev/package/pkg-placeholder
-[bundle-src]: https://img.shields.io/bundlephobia/minzip/pkg-placeholder?style=flat&colorA=080f12&colorB=1fa669&label=minzip
-[bundle-href]: https://bundlephobia.com/result?p=pkg-placeholder
-[license-src]: https://img.shields.io/github/license/antfu/pkg-placeholder.svg?style=flat&colorA=080f12&colorB=1fa669
-[license-href]: https://github.com/antfu/pkg-placeholder/blob/main/LICENSE
-[jsdocs-src]: https://img.shields.io/badge/jsdocs-reference-080f12?style=flat&colorA=080f12&colorB=1fa669
-[jsdocs-href]: https://www.jsdocs.io/package/pkg-placeholder
+[MIT](./LICENSE) License
